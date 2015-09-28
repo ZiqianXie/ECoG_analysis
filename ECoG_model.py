@@ -5,6 +5,7 @@ from clean_label import nonzero_seg
 from filter_design import filter_design
 from sklearn.linear_model import LassoCV
 from utils import num2info
+from data_clean import clean
 from collections import Counter
 
 os.chdir(os.path.dirname(__file__))
@@ -43,8 +44,10 @@ def binarize(dg, thres1=30, thres2=10):
     return dg
 
 
-def preprocessing(data, dg, delay=7):
+def preprocessing(data, dg, delay=7, cleaning=False, **kwargs):
     filters = filter_design()
+    if cleaning is True:
+        data = clean(data, **kwargs)
     filtered = np.vstack(np.convolve(d, f, mode='valid')
                          for d in data.T for f in filters).T
     logpower = np.log((striding(filtered, 40, 40)**2).mean(2))
@@ -67,7 +70,6 @@ def label_shift_left(dg, left1=4, left2=0):
             col[end-left2:end+1] = 0
     return dg
 if __name__ == "__main__":
-    filters = filter_design()
     subj = 'sub1'
     finger = 1
     f = h5py.File('ECoG_data.h5', 'r+')
