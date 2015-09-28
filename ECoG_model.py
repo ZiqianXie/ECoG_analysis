@@ -69,7 +69,7 @@ def label_shift_left(dg, left1=4, left2=0):
 if __name__ == "__main__":
     filters = filter_design()
     subj = 'sub1'
-    finger = 4
+    finger = 1
     f = h5py.File('ECoG_data.h5', 'r+')
     u = f[subj]['unmixing_matrix'][:]
     X = f[subj]['train_data'][:].dot(u)
