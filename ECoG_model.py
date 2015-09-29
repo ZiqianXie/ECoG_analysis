@@ -8,8 +8,6 @@ from utils import num2info
 from data_clean import clean
 from collections import Counter
 
-os.chdir(os.path.dirname(__file__))
-
 
 def striding(data, lens, stride):
     from numpy.lib.stride_tricks import as_strided as ast
@@ -44,19 +42,22 @@ def binarize(dg, thres1=30, thres2=10):
     return dg
 
 
-def preprocessing(data, dg, delay=7, cleaning=False, **kwargs):
+def preprocessing(data, dg, delay=7, cleaning=True, **kwargs):
     filters = filter_design()
-    if cleaning is True:
-        data = clean(data, **kwargs)
     filtered = np.vstack(np.convolve(d, f, mode='valid')
                          for d in data.T for f in filters).T
     logpower = np.log((striding(filtered, 40, 40)**2).mean(2))
     X = striding(logpower, delay, 1).reshape(logpower.shape[0]-delay+1, -1)
     dg = dg.reshape(-1, 1)
-    Y = dg[-X.shape[0]:, :]
-    Yb = binarize(Y)
-    Yb = label_shift_left(Yb)
-    return (X, Y, Yb)
+    y = dg[-X.shape[0]:, :]
+    yb = binarize(y)
+    yb = label_shift_left(yb)
+    if cleaning is True:
+        idx = clean(data, **kwargs)
+        X = X[idx, :]
+        y = y[idx, :]
+        yb = yb[idx, :]
+    return (X, y, yb)
 
 
 def label_shift_left(dg, left1=4, left2=0):
@@ -70,6 +71,7 @@ def label_shift_left(dg, left1=4, left2=0):
             col[end-left2:end+1] = 0
     return dg
 if __name__ == "__main__":
+    os.chdir(os.path.dirname(__file__))
     subj = 'sub1'
     finger = 1
     f = h5py.File('ECoG_data.h5', 'r+')
@@ -80,7 +82,7 @@ if __name__ == "__main__":
     Yt = f[subj]['cleaned_test_dg'][:]
     f.close()
     X, y, _ = preprocessing(X, Y[:, finger])
-    Xt, yt, _ = preprocessing(Xt, Yt[:, finger])
+    Xt, yt, _ = preprocessing(Xt, Yt[:, finger], cleaning=False)
     ls = LassoCV()
     ls.fit(X, y[:, 0])
     print ls.score(Xt, yt[:, 0])
