@@ -13,7 +13,7 @@ def fun(x):
     c = 0
     x2 = np.empty_like(x, dtype="f")
     for i in range(x.shape[0]):
-        c *= np.exp(0.)
+        c *= np.exp(-1/30.)
         c += x[i]
         c = min(c, 1)
         x2[i] = c
@@ -46,8 +46,8 @@ with h5py.File("ECoG_big_data.h5", "r+") as f1:
                     else:
                         l.append([sid+"//"+"finger"+str(finger+1), corr])
                         lr = LogisticRegressionCV()
-                        lr.fit(X[:, idxb], Yb[:, finger])
-                        tp = yp*fun(lr.predict(Xt[:, idxb]))
+                        lr.fit(X[:, idxc], Yb[:, finger])
+                        tp = yp*fun(lr.predict(Xt[:, idxc]))
                         m = np.where(np.convolve(tp, np.ones((40,))/40,
                                                  mode='same') < 0.5, 0, 1)
                         b, a = butter(2, 9.0/25, 'low')
